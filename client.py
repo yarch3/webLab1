@@ -1,21 +1,98 @@
 import socket
 
+import pygame
+import sys
+import random
+
+pygame.init()
 PORT = 6060
-HEADER = 64
+HEADER = 1024
 FORMAT = 'utf-8'
 DISCONNECT_MSG = "fxck"
 SERVER = "192.168.1.66"
 ADDR = (SERVER, PORT)
+WIDTH, HEIGHT = 1100, 700
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Sprite пистолета")
+
+gun_sprite = pygame.image.load("gun_sprite.png")
+gun_sprite = pygame.transform.scale(gun_sprite, (600, 600))
+computer_sprite = pygame.image.load("computer.png")
+computer_sprite = pygame.transform.scale(computer_sprite, (626, 385))
+fire_sprite = pygame.image.load("fire.png")
+fire_sprite = pygame.transform.scale(fire_sprite, (200, 140))
+shot_sprite = pygame.image.load("shot.png")
+shot_sprite = pygame.transform.scale(shot_sprite, (104, 93))
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
 
-def send(msg):
-    message = msg.encode(FORMAT)
-    msg_length = len(message)
-    send_length = str(msg_length).encode(FORMAT)
-    send_length += b' ' * (HEADER - len(send_length))
-    client.send(send_length)
-    client.send(message)
+is_shooting = False
+fire_timer = 0
+array_shot = []
+array_shot_client = []
 
-send("message 1")
+userid = 0
+
+def shooter(fire_timer):
+    while True:
+        screen.fill((150, 100, 100))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    fire_timer = pygame.time.get_ticks()
+                    # Создание нового попадания
+                    x_cords = random.randint(315, 705)
+                    y_cords = random.randint(185, 390)
+                    new_shot = (x_cords, y_cords)
+                    new_shot_client = ((x_cords - 340) * 2.5, (y_cords - 210) * 2.85)
+                    send_text = str(new_shot_client[0]) + ';' + str(new_shot_client[1])
+                    client.send(send_text.encode(FORMAT))
+                    print(new_shot)
+                    array_shot.append(new_shot)
+
+                # Попадание клиенту
+
+                # Попадание
+            for i in array_shot:
+                screen.blit(shot_sprite, i)
+            # Компутер
+            screen.blit(computer_sprite, (250, 180))
+            # Огонь
+            current_time = pygame.time.get_ticks()
+            if current_time - fire_timer < 100:
+                screen.blit(fire_sprite, (600, 380))
+            # Ружьё
+            screen.blit(gun_sprite, (400, 100))
+
+            pygame.display.flip()
+            pygame.time.delay(30)
+    client.close()
+    pygame.quit()
+    sys.exit()
+
+
+def notshooter():
+    while True:
+        screen.fill((150, 100, 100))
+        pygame.display.flip()
+        pygame.time.delay(30)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+            received = client.recv(1024).decode(FORMAT)
+            print(f"received {received}")
+            array_shot_client.append(tuple(float(y) for y in received.split(";")))
+            for i in array_shot_client:
+                screen.blit(shot_sprite, i)
+
+
+    client.close()
+    pygame.quit()
+    sys.exit()
+
+shooter(fire_timer)
+
+
