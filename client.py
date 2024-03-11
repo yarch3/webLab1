@@ -16,7 +16,7 @@ SERVER = "192.168.1.66"
 ADDR = (SERVER, PORT)
 WIDTH, HEIGHT = 1100, 700
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Sprite пистолета")
+pygame.display.set_caption("2PCshooting")
 
 gun_sprite = pygame.image.load("gun_sprite.png")
 gun_sprite = pygame.transform.scale(gun_sprite, (600, 600))
@@ -38,9 +38,9 @@ array_shot_client = []
 
 userid = 0
 
-def shooter(fire_timer):
-    running = True
-    while running:
+def shooter(fire_timer, shot_sprite):
+    shot_sprite = pygame.transform.scale(shot_sprite, (34, 30))
+    while True:
         screen.fill((150, 100, 100))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -80,8 +80,9 @@ def shooter(fire_timer):
 
 def notshooter():
     client.setblocking(False)  # Устанавливаем неблокирующий режим для сокета клиента
+    screen.fill((150, 100, 100))
+    pygame.display.flip()
     while True:
-        screen.fill((150, 100, 100))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 client.close()
@@ -100,7 +101,35 @@ def notshooter():
                 break
 
 
-shooter(fire_timer)
+def draw_text(text, font, color, x, y):
+    text_surface = font.render(text, True, color)
+    text_rect = text_surface.get_rect()
+    text_rect.topleft = (x, y)
+    screen.blit(text_surface, text_rect)
+
+font = pygame.font.Font(None, 36)
+button1 = pygame.Rect(300, 375, 200, 50)
+button2 = pygame.Rect(600, 375, 200, 50)
+
+while True:
+    screen.fill((150, 100, 100))
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if button1.collidepoint(event.pos):
+                shooter(fire_timer, shot_sprite)
+            if button2.collidepoint(event.pos):
+                notshooter()
+
+    pygame.draw.rect(screen, (100, 150, 150), button1)
+    draw_text('Отправлять', font, (255, 255, 255), 315, 385)
+    pygame.draw.rect(screen, (150, 100, 150), button2)
+    draw_text('Получать', font, (255, 255, 255), 615, 385)
+
+    pygame.display.flip()
 
 
 
