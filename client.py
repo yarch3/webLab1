@@ -4,11 +4,14 @@ import pygame
 import sys
 import random
 
+import select
+from _socket import IPPROTO_TCP
+
 pygame.init()
 PORT = 6060
 HEADER = 1024
 FORMAT = 'utf-8'
-DISCONNECT_MSG = "fxck"
+DISCONNECT_MSG = "disc"
 SERVER = "192.168.1.66"
 ADDR = (SERVER, PORT)
 WIDTH, HEIGHT = 1100, 700
@@ -25,6 +28,7 @@ shot_sprite = pygame.image.load("shot.png")
 shot_sprite = pygame.transform.scale(shot_sprite, (104, 93))
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#client.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
 client.connect(ADDR)
 
 is_shooting = False
@@ -35,11 +39,14 @@ array_shot_client = []
 userid = 0
 
 def shooter(fire_timer):
-    while True:
+    running = True
+    while running:
         screen.fill((150, 100, 100))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return
+                client.close()
+                pygame.quit()
+                sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     fire_timer = pygame.time.get_ticks()
@@ -56,43 +63,44 @@ def shooter(fire_timer):
                 # Попадание клиенту
 
                 # Попадание
-            for i in array_shot:
-                screen.blit(shot_sprite, i)
-            # Компутер
-            screen.blit(computer_sprite, (250, 180))
-            # Огонь
-            current_time = pygame.time.get_ticks()
-            if current_time - fire_timer < 100:
-                screen.blit(fire_sprite, (600, 380))
-            # Ружьё
-            screen.blit(gun_sprite, (400, 100))
+        for i in array_shot:
+            screen.blit(shot_sprite, i)
+        # Компутер
+        screen.blit(computer_sprite, (250, 180))
+        # Огонь
+        current_time = pygame.time.get_ticks()
+        if current_time - fire_timer < 100:
+            screen.blit(fire_sprite, (600, 380))
+        # Ружьё
+        screen.blit(gun_sprite, (400, 100))
 
-            pygame.display.flip()
-            pygame.time.delay(30)
-    client.close()
-    pygame.quit()
-    sys.exit()
+        pygame.display.flip()
+        pygame.time.delay(30)
 
 
 def notshooter():
+    client.setblocking(False)  # Устанавливаем неблокирующий режим для сокета клиента
     while True:
         screen.fill((150, 100, 100))
-        pygame.display.flip()
-        pygame.time.delay(30)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return
+                client.close()
+                pygame.quit()
+                sys.exit()
+        ready = select.select([client], [], [], 1)
+        if ready[0]:
             received = client.recv(1024).decode(FORMAT)
+            received = tuple(float(y) for y in received.split(";"))
             print(f"received {received}")
-            array_shot_client.append(tuple(float(y) for y in received.split(";")))
+            array_shot_client.append(received)
             for i in array_shot_client:
                 screen.blit(shot_sprite, i)
+            pygame.display.flip()
+            if not received:
+                break
 
-
-    client.close()
-    pygame.quit()
-    sys.exit()
 
 shooter(fire_timer)
+
 
 

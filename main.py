@@ -6,7 +6,7 @@ import pygame
 PORT = 6060
 HEADER = 1024
 FORMAT = 'utf-8'
-DISCONNECT_MSG = "fxck"
+DISCONNECT_MSG = "disc"
 shot_sprite = pygame.image.load("shot.png")
 shot_sprite = pygame.transform.scale(shot_sprite, (104, 93))
 pygame.init()
@@ -16,6 +16,7 @@ pygame.init()
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#server.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
 server.bind(ADDR)
 shots = []
 coordinates = []
