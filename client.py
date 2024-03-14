@@ -8,7 +8,7 @@ import subprocess
 pygame.init()
 pygame.mixer.init()
 global SERVER
-PORT = 6060
+PORT = 6050
 HEADER = 1024
 FORMAT = 'utf-8'
 DISCONNECT_MSG = "disc"
@@ -106,7 +106,7 @@ def check_ip():
 
 
         pygame.display.flip()
-def menu(client,server_process):
+def menu(client):
     screen.fill((150, 100, 100))
     while True:
         draw_text('Выбери кто ты по жизни', font, (255, 255, 255), 300, 200)

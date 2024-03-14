@@ -3,7 +3,7 @@ import threading
 import pygame
 
 
-PORT = 6060
+PORT = 6040
 HEADER = 1024
 FORMAT = 'utf-8'
 DISCONNECT_MSG = "disc"

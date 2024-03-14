@@ -8,7 +8,7 @@ import subprocess
 pygame.init()
 pygame.mixer.init()
 global SERVER
-PORT = 6060
+PORT = 6040
 HEADER = 1024
 FORMAT = 'utf-8'
 DISCONNECT_MSG = "disc"
@@ -24,6 +24,12 @@ fire_sprite = pygame.image.load("img/fire.png")
 fire_sprite = pygame.transform.scale(fire_sprite, (200, 140))
 shot_sprite = pygame.image.load("img/shot.png")
 shot_sprite = pygame.transform.scale(shot_sprite, (104, 93))
+backgroundNsh_sprite = pygame.image.load("img/background.jpg")
+backgroundNsh_sprite = pygame.transform.scale(backgroundNsh_sprite,(1100, 700))
+backgroundSh_sprite = pygame.image.load("img/background.jpg")
+backgroundSh_sprite = pygame.transform.scale(backgroundSh_sprite,(450, 250))
+shotSh_sprite = pygame.image.load("img/shotSh_sprite.png")
+shotSh_sprite = pygame.transform.scale(shotSh_sprite, (150, 150))
 
 fire_sound = pygame.mixer.Sound("music/fire.mp3")
 button_sound = pygame.mixer.Sound("music/button.mp3")
@@ -37,10 +43,9 @@ array_shot = []
 array_shot_client = []
 score = 0
 
-
 font = pygame.font.Font(None, 36)
-button_left = pygame.Rect(300, 375, 200, 50)
-button_right = pygame.Rect(600, 375, 200, 50)
+button_left = pygame.Rect(300, 375, 230, 50)
+button_right = pygame.Rect(600, 375, 230, 50)
 button_menu = pygame.Rect(25, 25, 100, 50)
 def draw_text(text, font, color, x, y):
     text_surface = font.render(text, True, color)
@@ -65,6 +70,7 @@ def get_connection(ADDR):
 def connectionSelection():
     while True:
         draw_text('Выбери тип подключения:', font, (255, 255, 255), 300, 200)
+        screen.fill((150, 100, 100))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -75,7 +81,7 @@ def connectionSelection():
                     subprocess.Popen("python main.py", shell=True)
                     SERVER = socket.gethostbyname(socket.gethostname())
                     client = get_connection((SERVER, PORT))
-                    menu(client)
+                    menu(client, SERVER)
                 if button_right.collidepoint(event.pos):
                     button_sound.play(0)
                     check_ip()
@@ -98,7 +104,7 @@ def check_ip():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     client = get_connection((SERVER, PORT))
-                    menu(client)
+                    menu(client, SERVER)
                 elif event.key == pygame.K_BACKSPACE:
                     SERVER = SERVER[:-1]
                 else:
@@ -106,10 +112,11 @@ def check_ip():
 
 
         pygame.display.flip()
-def menu(client):
+def menu(client, SERVER):
     screen.fill((150, 100, 100))
     while True:
         draw_text('Выбери кто ты по жизни', font, (255, 255, 255), 300, 200)
+        draw_text('Ваш IP: ' + SERVER, font, (255, 255, 255), 500, 100)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -130,8 +137,8 @@ def menu(client):
 def shooter(fire_timer, shot_sprite, client):
     beginShooter_sound.play(0)
     shot_sprite = pygame.transform.scale(shot_sprite, (34, 30))
+    screen.fill((150, 100, 100))
     while True:
-        screen.fill((150, 100, 100))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 client.close()
@@ -151,9 +158,11 @@ def shooter(fire_timer, shot_sprite, client):
                     client.send(send_text.encode(FORMAT))
                     print(new_shot)
                     array_shot.append(new_shot)
+
+        screen.blit(backgroundSh_sprite, (335, 209))
         # Попадание
         for i in array_shot:
-            screen.blit(shot_sprite, i)
+            screen.blit(shotSh_sprite, i)
         # Компутер
         screen.blit(computer_sprite, (250, 180))
         # Огонь
@@ -168,6 +177,7 @@ def shooter(fire_timer, shot_sprite, client):
 def notshooter(client):
     client.setblocking(False)  # Устанавливаем неблокирующий режим для сокета клиента
     screen.fill((150, 100, 100))
+    screen.blit(backgroundNsh_sprite, (0, 0))
     s = 0
     array_shot_client = []
     pygame.display.flip()
@@ -190,8 +200,5 @@ def notshooter(client):
                 screen.blit(shot_sprite, i)
             pygame.display.flip()
             if not received:
-                break
-            elif s > 10:
-                #выключить компутер гейм овер
                 break
 connectionSelection()
